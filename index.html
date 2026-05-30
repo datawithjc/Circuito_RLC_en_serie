@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuito RLC · Observatorio de Ecuaciones Diferenciales · UNAD</title>
+<meta name="description" content="Simulador interactivo de circuitos RLC en serie: ecuación diferencial de segundo orden, regímenes de amortiguamiento, plano de fase, energía y resonancia. Recurso educativo UNAD.">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Spline+Sans+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --void:#070b16; --abyss:#0a1020; --deep:#0e1628;
+  --panel:#111c33; --panel-2:#152138;
+  --line:#1f2e4a; --line-soft:#1a2740;
+  --ink:#eaf0ff; --ink-soft:#9fb0d0; --ink-faint:#5f7193; --ink-ghost:#3a4866;
+  --gold:#f2b417; --gold-bright:#ffd24a; --gold-deep:#c8901a;
+  --amber:#ff9a3c; --cyan:#34d6e8; --rose:#ff5d8f; --grass:#4fd98a; --violet:#9b7dff;
+  --good:#4fd98a; --bad:#ff5d8f;
+  --r-lg:18px; --r-md:12px; --r-sm:8px;
+  --shadow:0 24px 60px -22px rgba(0,0,0,.85);
+  --glow-gold:0 0 0 1px rgba(242,180,23,.18), 0 8px 30px -8px rgba(242,180,23,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1200px 700px at 78% -8%, rgba(242,180,23,.10), transparent 55%),
+    radial-gradient(900px 600px at 8% 110%, rgba(52,214,232,.07), transparent 55%),
+    linear-gradient(180deg,var(--void),var(--abyss));
+  color:var(--ink); font-family:'Inter Tight',system-ui,sans-serif;
+  min-height:100vh; overflow-x:hidden; -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.katex{font-size:1.03em}
+
+/* ===== HEADER ===== */
+header{
+  position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;
+  gap:24px;flex-wrap:wrap;padding:20px clamp(18px,3.5vw,46px);
+  border-bottom:1px solid var(--line-soft);
+  background:linear-gradient(180deg, rgba(14,22,40,.65), rgba(14,22,40,0));backdrop-filter:blur(8px);
+}
+.brand{display:flex;align-items:center;gap:18px;min-width:0}
+.brand .logo{height:54px;width:auto;display:block;background:#fff;border-radius:10px;padding:6px 9px;box-shadow:0 6px 18px -8px rgba(0,0,0,.6);flex:0 0 auto}
+.eyebrow{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:3px}
+.brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(20px,2.4vw,30px);line-height:1.04;letter-spacing:-.01em}
+.brand h1 em{font-style:italic;color:var(--gold-bright)}
+.brand .sub{font-size:12.5px;color:var(--ink-faint);margin-top:4px}
+.header-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:'Spline Sans Mono',monospace;font-size:11px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(17,28,51,.6);color:var(--ink-soft);letter-spacing:.04em}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good)}
+.chip.regime{border-color:var(--gold-deep);color:var(--gold-bright);font-weight:600}
+.chip.regime .dot{background:var(--gold-bright);box-shadow:0 0 10px var(--gold-bright)}
+.nav-link{color:var(--ink-soft);text-decoration:none;border:1px solid var(--line);padding:7px 13px;border-radius:999px;transition:all .18s}
+.nav-link:hover{border-color:var(--gold-deep);color:var(--gold-bright)}
+
+/* ===== EQUATION BAR ===== */
+.eqbar{position:relative;z-index:3;display:flex;align-items:stretch;gap:14px;flex-wrap:wrap;padding:18px clamp(18px,3.5vw,46px);border-bottom:1px solid var(--line-soft)}
+.eq-block{flex:1 1 360px;min-width:280px;position:relative;display:flex;flex-direction:column;justify-content:center;padding:16px 20px;border:1px solid var(--line-soft);border-radius:var(--r-md);background:linear-gradient(180deg,var(--panel),var(--deep));overflow-x:auto}
+.eq-block.alt{background:rgba(10,16,32,.5);border-color:var(--line-soft)}
+.eq-label{position:absolute;top:-9px;left:16px;z-index:2;font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);background:var(--abyss);padding:0 8px}
+.eq-render{min-height:34px;color:var(--ink)}
+.eq-sub{font-size:11.5px;color:var(--ink-faint);margin-top:8px}
+
+/* ===== LAYOUT ===== */
+.workspace{position:relative;z-index:2;display:grid;grid-template-columns:312px minmax(0,1fr) 312px;min-height:60vh}
+.rail{border-right:1px solid var(--line-soft);padding:22px clamp(14px,1.4vw,22px) 40px;display:flex;flex-direction:column;gap:26px}
+.rail.right{border-right:none;border-left:1px solid var(--line-soft)}
+.section-h{display:flex;align-items:center;gap:10px;font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.section-h::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--gold);box-shadow:0 0 10px rgba(242,180,23,.6)}
+
+/* Param controls */
+.param{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+.param-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.param-top .lab{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:7px}
+.param-top .lab .sym{font-family:'Fraunces',serif;font-style:italic;color:var(--gold-bright);font-size:15px}
+.param-val{display:flex;align-items:center;gap:5px}
+.param-val input{width:74px;background:var(--deep);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);padding:6px 8px;font-family:'Spline Sans Mono',monospace;font-size:12.5px;text-align:right;outline:none;transition:border-color .2s}
+.param-val input:focus{border-color:var(--gold)}
+.param-val .unit{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);width:18px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:var(--line);border-radius:99px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--gold-bright),var(--gold-deep));box-shadow:0 0 0 4px rgba(242,180,23,.16),0 3px 8px rgba(0,0,0,.5);transition:transform .12s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.18)}
+input[type=range]::-moz-range-thumb{width:17px;height:17px;border:none;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--gold-bright),var(--gold-deep));box-shadow:0 0 0 4px rgba(242,180,23,.16)}
+
+/* Source selector */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.seg button{padding:9px 6px;cursor:pointer;border:1px solid var(--line-soft);border-radius:var(--r-sm);background:rgba(17,28,51,.4);color:var(--ink-soft);font-size:11.5px;font-weight:500;transition:all .16s;text-align:center}
+.seg button:hover{border-color:var(--gold-deep);color:var(--ink)}
+.seg button.active{border-color:var(--gold);background:rgba(242,180,23,.12);color:var(--ink);box-shadow:var(--glow-gold)}
+.subfields{display:flex;flex-direction:column;gap:12px}
+.field-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.field-row label{font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+.field-row label .sym{font-family:'Fraunces',serif;font-style:italic;color:var(--gold-bright)}
+.field-row .ipt{display:flex;align-items:center;gap:5px}
+.field-row input{width:78px;background:var(--deep);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);padding:7px 9px;font-family:'Spline Sans Mono',monospace;font-size:12.5px;text-align:right;outline:none}
+.field-row input:focus{border-color:var(--gold)}
+.field-row .unit{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);min-width:28px}
+
+/* Presets */
+.presets{display:flex;flex-direction:column;gap:8px}
+.preset{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;cursor:pointer;text-align:left;border:1px solid var(--line-soft);border-radius:var(--r-sm);background:rgba(17,28,51,.4);color:var(--ink-soft);transition:all .18s}
+.preset:hover{border-color:var(--gold-deep);background:rgba(242,180,23,.06);color:var(--ink);transform:translateX(3px)}
+.preset.active{border-color:var(--gold);background:rgba(242,180,23,.1);color:var(--ink);box-shadow:inset 3px 0 0 var(--gold)}
+.preset .pname{font-size:12.5px;font-weight:500}
+.preset .ptag{font-family:'Spline Sans Mono',monospace;font-size:10px;opacity:.85}
+
+.btn-ghost{width:100%;padding:10px;cursor:pointer;border:1px solid var(--line);border-radius:var(--r-sm);background:transparent;color:var(--ink-soft);font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;transition:all .18s}
+.btn-ghost:hover{border-color:var(--gold-deep);color:var(--ink);background:rgba(242,180,23,.05)}
+
+/* ===== STAGE ===== */
+.stage{position:relative;display:flex;flex-direction:column;background:var(--void)}
+.tabs{display:flex;gap:4px;padding:12px 18px 0;border-bottom:1px solid var(--line-soft)}
+.tab{padding:10px 16px;cursor:pointer;border:none;background:none;color:var(--ink-faint);font-family:'Inter Tight';font-size:13px;font-weight:600;letter-spacing:.02em;border-bottom:2px solid transparent;transition:all .16s;display:flex;align-items:center;gap:7px}
+.tab svg{width:15px;height:15px}
+.tab:hover{color:var(--ink-soft)}
+.tab.active{color:var(--gold-bright);border-bottom-color:var(--gold)}
+.canvas-host{position:relative;flex:1;min-height:440px}
+#plot{display:block;width:100%;height:100%;cursor:crosshair}
+.plot-readout{position:absolute;top:14px;left:18px;z-index:5;padding:10px 13px;border-radius:10px;background:rgba(7,11,22,.85);border:1px solid var(--line);font-family:'Spline Sans Mono',monospace;font-size:11.5px;color:var(--ink-soft);line-height:1.7;pointer-events:none;backdrop-filter:blur(4px)}
+.plot-readout b{color:var(--gold-bright)}
+.plot-readout .cy{color:var(--cyan)} .plot-readout .am{color:var(--gold-bright)}
+
+/* Playback */
+.transport{display:flex;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--line-soft);background:rgba(10,16,32,.4)}
+.play-btn{width:42px;height:42px;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;border:none;border-radius:50%;background:linear-gradient(135deg,var(--gold-bright),var(--gold-deep));color:#1a1300;box-shadow:0 8px 22px -8px rgba(242,180,23,.6);transition:transform .15s}
+.play-btn:hover{transform:scale(1.07)}
+.play-btn svg{width:18px;height:18px}
+.scrub{flex:1;display:flex;align-items:center;gap:12px}
+.scrub input[type=range]{flex:1}
+.tlabel{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--gold-bright);min-width:96px;text-align:right}
+.speed-sel{display:flex;gap:4px}
+.speed-sel button{padding:5px 9px;cursor:pointer;border:1px solid var(--line);border-radius:6px;background:rgba(17,28,51,.5);color:var(--ink-faint);font-family:'Spline Sans Mono',monospace;font-size:11px;transition:all .15s}
+.speed-sel button.active{border-color:var(--gold);color:var(--gold-bright);background:rgba(242,180,23,.1)}
+
+/* ===== RIGHT RAIL ===== */
+.circuit-card{border:1px solid var(--line-soft);border-radius:var(--r-md);background:linear-gradient(180deg,var(--panel),var(--deep));padding:14px}
+#circuit{width:100%;height:auto;display:block}
+.diag-grid{display:flex;flex-direction:column;gap:10px}
+.diag-grid .row{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:9px;border-bottom:1px dashed var(--line-soft)}
+.diag-grid .row:last-child{border-bottom:none;padding-bottom:0}
+.diag-grid .rk{font-size:12px;color:var(--ink-faint)}
+.diag-grid .rk .sym{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft)}
+.diag-grid .rv{font-family:'Spline Sans Mono',monospace;font-size:13.5px;color:var(--gold-bright);font-weight:600}
+.regime-banner{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:var(--r-md);margin-bottom:4px}
+.regime-banner .ico{width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;font-size:18px}
+.regime-banner .txt .t{font-size:13.5px;font-weight:600}
+.regime-banner .txt .d{font-size:11px;margin-top:2px;opacity:.85}
+.regime-under{background:rgba(52,214,232,.1);border:1px solid rgba(52,214,232,.35)}
+.regime-under .ico{background:rgba(52,214,232,.18);color:var(--cyan)} .regime-under .t{color:var(--cyan)} .regime-under .d{color:var(--cyan)}
+.regime-over{background:rgba(255,154,60,.1);border:1px solid rgba(255,154,60,.35)}
+.regime-over .ico{background:rgba(255,154,60,.18);color:var(--amber)} .regime-over .t{color:var(--amber)} .regime-over .d{color:var(--amber)}
+.regime-crit{background:rgba(242,180,23,.1);border:1px solid rgba(242,180,23,.35)}
+.regime-crit .ico{background:rgba(242,180,23,.18);color:var(--gold-bright)} .regime-crit .t{color:var(--gold-bright)} .regime-crit .d{color:var(--gold-bright)}
+.regime-undamped{background:rgba(155,125,255,.1);border:1px solid rgba(155,125,255,.35)}
+.regime-undamped .ico{background:rgba(155,125,255,.18);color:var(--violet)} .regime-undamped .t{color:var(--violet)} .regime-undamped .d{color:var(--violet)}
+.char-eq{padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--r-sm);background:rgba(7,11,22,.4);margin-top:4px}
+.char-eq .cl{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.char-eq .roots{margin-top:10px;font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--cyan);line-height:1.6}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:11.5px;color:var(--ink-soft)}
+.legend .lrow{display:flex;align-items:center;gap:10px}
+.legend .swatch{width:26px;height:3px;border-radius:2px;flex:0 0 auto}
+
+/* ===== FOOTER ===== */
+footer{position:relative;z-index:2;padding:26px clamp(18px,3.5vw,46px);border-top:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--ink-faint);font-size:12px}
+footer .fbrand{display:flex;align-items:center;gap:12px}
+footer .fbrand img{height:34px;background:#fff;border-radius:7px;padding:4px 6px}
+footer .math-note{font-family:'Spline Sans Mono',monospace;font-size:11px}
+
+@media (max-width:1180px){
+  .workspace{grid-template-columns:1fr}
+  .rail{border-right:none;border-bottom:1px solid var(--line-soft)}
+  .rail.right{border-left:none;border-top:1px solid var(--line-soft)}
+  .stage{order:-1}.canvas-host{min-height:58vh}
+}
+@media (max-width:560px){
+  .eqbar{flex-direction:column}
+  .eq-block{flex:0 0 auto;width:100%;min-width:0}
+  .brand .logo{height:46px}.brand h1{font-size:23px}
+  .tabs{overflow-x:auto}
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--abyss)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;border:2px solid var(--abyss)}
+::-webkit-scrollbar-thumb:hover{background:var(--gold-deep)}
+.fade-in{animation:fadeUp .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="fade-in">
+  <div class="brand">
+    <img class="logo" id="logoImg" alt="Universidad Nacional Abierta y a Distancia — UNAD">
+    <div class="titles">
+      <div class="eyebrow">Observatorio de Ecuaciones Diferenciales</div>
+      <h1>Circuito <em>RLC</em> en serie</h1>
+      <div class="sub">EDO lineal de segundo orden &nbsp;·&nbsp; respuesta transitoria, fase, energía y resonancia</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="chip regime" id="chipRegime"><span class="dot"></span> —</span>
+    <span class="chip"><span class="dot"></span> Motor RK4</span>
+  </div>
+</header>
+
+<div class="eqbar fade-in" style="animation-delay:.06s">
+  <div class="eq-block">
+    <span class="eq-label">Modelo físico</span>
+    <div class="eq-render" id="eqModel"></div>
+    <div class="eq-sub">Ley de voltajes de Kirchhoff sobre el lazo serie, con <span id="iDef"></span></div>
+  </div>
+  <div class="eq-block alt">
+    <span class="eq-label">Con tus valores</span>
+    <div class="eq-render" id="eqNumeric"></div>
+    <div class="eq-sub" id="eqNumericSub"></div>
+  </div>
+</div>
+
+<main class="workspace">
+  <!-- ===== LEFT RAIL ===== -->
+  <aside class="rail left fade-in" style="animation-delay:.1s">
+    <div>
+      <div class="section-h">Componentes</div>
+      <div style="margin-top:14px">
+        <div class="param">
+          <div class="param-top">
+            <span class="lab"><span class="sym">R</span> Resistencia</span>
+            <span class="param-val"><input id="Rnum" type="number" value="0.4" step="0.1"><span class="unit">Ω</span></span>
+          </div>
+          <input type="range" id="Rrange" min="0" max="20" step="0.05" value="0.4">
+        </div>
+        <div class="param">
+          <div class="param-top">
+            <span class="lab"><span class="sym">L</span> Inductancia</span>
+            <span class="param-val"><input id="Lnum" type="number" value="1" step="0.1"><span class="unit">H</span></span>
+          </div>
+          <input type="range" id="Lrange" min="0.1" max="10" step="0.05" value="1">
+        </div>
+        <div class="param">
+          <div class="param-top">
+            <span class="lab"><span class="sym">C</span> Capacitancia</span>
+            <span class="param-val"><input id="Cnum" type="number" value="1" step="0.05"><span class="unit">F</span></span>
+          </div>
+          <input type="range" id="Crange" min="0.05" max="5" step="0.01" value="1">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-h">Fuente E(t)</div>
+      <div class="seg" id="srcSeg" style="margin-top:14px">
+        <button data-src="free" class="active">Libre</button>
+        <button data-src="step">Escalón DC</button>
+        <button data-src="ac">Sinusoidal</button>
+      </div>
+      <div class="subfields" id="srcFields">
+        <div class="field-row" id="rowE0" style="display:none">
+          <label><span class="sym">E₀</span> Amplitud</label>
+          <span class="ipt"><input id="E0num" type="number" value="1" step="0.1"><span class="unit">V</span></span>
+        </div>
+        <div class="field-row" id="rowW" style="display:none">
+          <label><span class="sym">ω</span> Frec. angular</label>
+          <span class="ipt"><input id="Wnum" type="number" value="1" step="0.05"><span class="unit">rad/s</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-h">Condiciones iniciales</div>
+      <div class="subfields" style="margin-top:14px">
+        <div class="field-row">
+          <label><span class="sym">q(0)</span> Carga inicial</label>
+          <span class="ipt"><input id="q0num" type="number" value="1" step="0.1"><span class="unit">C</span></span>
+        </div>
+        <div class="field-row">
+          <label><span class="sym">i(0)</span> Corriente inicial</label>
+          <span class="ipt"><input id="i0num" type="number" value="0" step="0.1"><span class="unit">A</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-h">Escenarios</div>
+      <div class="presets" id="presets" style="margin-top:12px"></div>
+    </div>
+
+    <div>
+      <div class="section-h">Tiempo de simulación</div>
+      <div class="field-row" style="margin-top:14px">
+        <label>Duración</label>
+        <span class="ipt"><input id="tEndNum" type="number" value="40" step="1"><span class="unit">s</span></span>
+      </div>
+      <button class="btn-ghost" id="btnAuto" style="margin-top:10px">↻ Ajuste automático</button>
+    </div>
+  </aside>
+
+  <!-- ===== STAGE ===== -->
+  <section class="stage fade-in" style="animation-delay:.14s">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>Dominio del tiempo</button>
+      <button class="tab" data-tab="phase"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V3M3 21h18"/><path d="M20 8c-6 0-9 4-15 9"/></svg>Plano de fase</button>
+      <button class="tab" data-tab="energy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Energía</button>
+      <button class="tab" data-tab="reson"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0"/></svg>Resonancia</button>
+    </div>
+    <div class="canvas-host" id="canvasHost">
+      <canvas id="plot"></canvas>
+      <div class="plot-readout" id="plotReadout"></div>
+    </div>
+    <div class="transport">
+      <button class="play-btn" id="playBtn" title="Reproducir / pausar">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="scrub">
+        <input type="range" id="scrub" min="0" max="1000" value="0">
+        <span class="tlabel" id="tlabel">t = 0.00 s</span>
+      </div>
+      <div class="speed-sel" id="speedSel">
+        <button data-s="0.5">0.5×</button>
+        <button data-s="1" class="active">1×</button>
+        <button data-s="2">2×</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RIGHT RAIL ===== -->
+  <aside class="rail right fade-in" style="animation-delay:.18s">
+    <div>
+      <div class="section-h">Esquema del circuito</div>
+      <div class="circuit-card" style="margin-top:12px">
+        <svg id="circuit" viewBox="0 0 300 210" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+    <div>
+      <div class="section-h">Régimen</div>
+      <div id="regimeBanner" style="margin-top:12px"></div>
+      <div class="char-eq" id="charEq"></div>
+    </div>
+    <div>
+      <div class="section-h">Parámetros característicos</div>
+      <div class="diag-grid" id="diagGrid" style="margin-top:12px"></div>
+    </div>
+    <div>
+      <div class="section-h">Leyenda</div>
+      <div class="legend" style="margin-top:12px" id="legend"></div>
+    </div>
+  </aside>
+</main>
+
+<footer class="fade-in" style="animation-delay:.22s">
+  <div class="fbrand">
+    <img id="logoFoot" alt="UNAD">
+    <div>
+      <div style="color:var(--ink-soft);font-weight:500">Universidad Nacional Abierta y a Distancia</div>
+      <div>Recurso educativo abierto · Ecuaciones Diferenciales de segundo orden</div>
+    </div>
+  </div>
+  <div class="math-note">Integración: Runge–Kutta 4.º orden &nbsp;·&nbsp; sistema <span id="footEq"></span></div>
+</footer>
+
+<script>
+/* ============================================================
+   SIMULADOR DE CIRCUITO RLC EN SERIE — UNAD
+   L q'' + R q' + (1/C) q = E(t),    i = q'
+   ============================================================ */
+(() => {
+'use strict';
+const LOGO_B64 = "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";
+
+/* ---------- Estado ---------- */
+const P = {
+  R:0.4, L:1, C:1,
+  src:'free', E0:1, W:1,
+  q0:1, i0:0,
+  tEnd:40, tAuto:true,
+  tab:'time', speed:1
+};
+let SOL = { t:[], q:[], i:[], n:0, dt:0 };   // arrays de la solución
+let ANA = {};                                 // análisis
+let playT = 0, playing = false, lastFrame = 0;
+let hoverIdx = null;
+
+const $ = id => document.getElementById(id);
+const canvas = $('plot');
+const ctx = canvas.getContext('2d');
+const host = $('canvasHost');
+// El canvas NO resuelve variables CSS: usamos valores reales
+const COL = { cyan:'#34d6e8', gold:'#ffd24a', violet:'#9b7dff', rose:'#ff5d8f', amber:'#ff9a3c', goldDeep:'#c8901a' };
+
+/* ---------- Logo ---------- */
+window.addEventListener('DOMContentLoaded', () => {
+  const src = "data:image/png;base64," + LOGO_B64;
+  ['logoImg','logoFoot'].forEach(id => { const el=$(id); if(el) el.src=src; });
+});
+
+/* ============================================================
+   1. ANÁLISIS DEL CIRCUITO
+   ============================================================ */
+function analyze(){
+  const {R,L,C} = P;
+  const w0 = 1/Math.sqrt(L*C);          // frecuencia natural
+  const alpha = R/(2*L);                 // factor de amortiguamiento
+  const zeta = alpha/w0;                 // razón de amortiguamiento
+  const disc = R*R - 4*L/C;              // discriminante de la ecuación característica
+  const Q = R>1e-9 ? (1/R)*Math.sqrt(L/C) : Infinity;
+  const tol = 1e-9*Math.max(1, R*R, 4*L/C);
+  let regime, roots, wd=null, sr=[];
+  if (R < 1e-9){
+    regime='undamped'; wd=w0; sr=[`±j${fmt(w0,3)}`]; roots='complejos imaginarios puros';
+  } else if (disc > tol){
+    regime='over';
+    const rad=Math.sqrt(disc)/(2*L);
+    sr=[-alpha+rad, -alpha-rad];
+    roots='reales y distintas';
+  } else if (disc < -tol){
+    regime='under';
+    wd=Math.sqrt(w0*w0-alpha*alpha);
+    sr=[`-${fmt(alpha,3)} ± j${fmt(wd,3)}`];
+    roots='complejas conjugadas';
+  } else {
+    regime='crit'; sr=[-alpha,-alpha]; roots='reales repetidas';
+  }
+  ANA = {w0,alpha,zeta,disc,Q,regime,roots,wd,sr,
+         f0:w0/(2*Math.PI), bw:R/L};
+}
+
+/* ============================================================
+   2. INTEGRACIÓN RK4 DEL SISTEMA  [q, i]
+   ============================================================ */
+function Esource(t){
+  if (P.src==='free') return 0;
+  if (P.src==='step') return P.E0;            // escalón: E0 constante para t>=0
+  return P.E0*Math.cos(P.W*t);                // sinusoidal
+}
+function deriv(t,q,i){
+  return [ i, (Esource(t) - P.R*i - q/P.C)/P.L ];
+}
+function computeAutoTEnd(){
+  const {alpha,w0,wd,regime} = ANA;
+  let tEnd;
+  if (regime==='undamped'){ tEnd = 8*(2*Math.PI/w0); }
+  else if (regime==='under'){
+    const tau = 1/alpha, T = 2*Math.PI/wd;
+    tEnd = Math.max(5*tau, 6*T);
+  } else {
+    // sobreamortiguado/crítico: raíz lenta domina
+    const slow = (regime==='crit') ? alpha : (alpha - Math.sqrt(alpha*alpha-w0*w0));
+    tEnd = 6/Math.max(slow,1e-6);
+  }
+  if (P.src==='ac'){ tEnd = Math.max(tEnd, 8*(2*Math.PI/P.W)); }
+  if (P.src==='step'){ tEnd = Math.max(tEnd, 6/Math.max(alpha,w0/4,1e-6)); }
+  // redondeo agradable
+  const mag = Math.pow(10, Math.floor(Math.log10(tEnd)));
+  tEnd = Math.ceil(tEnd/mag)*mag;
+  return Math.min(Math.max(tEnd, mag), 5000);
+}
+function integrate(){
+  if (P.tAuto) P.tEnd = computeAutoTEnd();
+  $('tEndNum').value = fmt(P.tEnd, P.tEnd<10?2:0);
+
+  // paso estable: limitar dt frente a la escala más rápida
+  const fastest = Math.max(ANA.w0, ANA.alpha*2, P.src==='ac'?P.W:0, 1e-6);
+  let N = 3000;
+  let dt = P.tEnd/N;
+  while (dt*fastest > 0.25 && N < 40000){ N*=2; dt=P.tEnd/N; }
+
+  const t=new Float64Array(N+1), q=new Float64Array(N+1), iA=new Float64Array(N+1);
+  let qc=P.q0, ic=P.i0;
+  t[0]=0; q[0]=qc; iA[0]=ic;
+  for (let n=0;n<N;n++){
+    const tn=n*dt;
+    const [k1q,k1i]=deriv(tn,qc,ic);
+    const [k2q,k2i]=deriv(tn+dt/2,qc+dt/2*k1q,ic+dt/2*k1i);
+    const [k3q,k3i]=deriv(tn+dt/2,qc+dt/2*k2q,ic+dt/2*k2i);
+    const [k4q,k4i]=deriv(tn+dt,qc+dt*k3q,ic+dt*k3i);
+    qc+=dt/6*(k1q+2*k2q+2*k3q+k4q);
+    ic+=dt/6*(k1i+2*k2i+2*k3i+k4i);
+    t[n+1]=(n+1)*dt; q[n+1]=qc; iA[n+1]=ic;
+  }
+  // extremos para escalado
+  let qmin=Infinity,qmax=-Infinity,imin=Infinity,imax=-Infinity,iabs=0;
+  for(let n=0;n<=N;n++){
+    if(q[n]<qmin)qmin=q[n]; if(q[n]>qmax)qmax=q[n];
+    if(iA[n]<imin)imin=iA[n]; if(iA[n]>imax)imax=iA[n];
+    if(Math.abs(iA[n])>iabs)iabs=Math.abs(iA[n]);
+  }
+  SOL={t,q,i:iA,n:N,dt,qmin,qmax,imin,imax,iabs:Math.max(iabs,1e-9)};
+}
+const idxAtTime = tt => Math.max(0, Math.min(SOL.n, Math.round(tt/SOL.dt)));
+
+/* ============================================================
+   3. RENDER LATEX (modelo + numérico) y paneles
+   ============================================================ */
+function tex(el, s){ try{ katex.render(s,el,{throwOnError:false}); }catch(e){ el.textContent=s; } }
+function renderEquations(){
+  tex($('eqModel'), 'L\\,\\dfrac{d^{2}q}{dt^{2}} + R\\,\\dfrac{dq}{dt} + \\dfrac{1}{C}\\,q = E(t)');
+  tex($('iDef'), 'i = \\dfrac{dq}{dt}');
+  const {R,L,C} = P;
+  let rhs;
+  if (P.src==='free') rhs='0';
+  else if (P.src==='step') rhs=fmt(P.E0,2);
+  else rhs=`${fmt(P.E0,2)}\\cos(${fmt(P.W,2)}\\,t)`;
+  tex($('eqNumeric'), `${fmt(L,2)}\\,\\ddot q + ${fmt(R,2)}\\,\\dot q + ${fmt(1/C,3)}\\,q = ${rhs}`);
+  const srcName = P.src==='free'?'respuesta libre (sin fuente)':P.src==='step'?'fuente escalón (DC)':'fuente sinusoidal (AC)';
+  $('eqNumericSub').textContent = `${srcName} · q(0)=${fmt(P.q0,2)} C, i(0)=${fmt(P.i0,2)} A`;
+  tex($('footEq'), '\\dot q = i,\\;\\; \\dot i = (E - Ri - q/C)/L');
+}
+
+function renderDiagnostics(){
+  const A=ANA;
+  // chip de régimen
+  const names={under:'Subamortiguado',over:'Sobreamortiguado',crit:'Crítico',undamped:'Sin amortiguamiento'};
+  $('chipRegime').innerHTML = `<span class="dot"></span> ${names[A.regime]}`;
+
+  // banner
+  const cls={under:'regime-under',over:'regime-over',crit:'regime-crit',undamped:'regime-undamped'};
+  const ico={under:'∿',over:'⤵',crit:'⟋',undamped:'◯'};
+  const desc={
+    under:'Las raíces son complejas: la respuesta oscila con amplitud que decae exponencialmente.',
+    over:'Raíces reales distintas: la respuesta decae sin oscilar (dos exponenciales).',
+    crit:'Raíces reales repetidas: retorno al equilibrio en el menor tiempo posible sin oscilar.',
+    undamped:'Sin resistencia: la energía se conserva y la oscilación es permanente.'
+  };
+  $('regimeBanner').innerHTML =
+    `<div class="regime-banner ${cls[A.regime]}">
+       <div class="ico">${ico[A.regime]}</div>
+       <div class="txt"><div class="t">${names[A.regime]}</div><div class="d">${desc[A.regime]}</div></div>
+     </div>`;
+
+  // ecuación característica + raíces
+  const charDiv=$('charEq');
+  charDiv.innerHTML=`<div class="cl">Ecuación característica</div><div id="charTex"></div><div class="roots" id="rootsTex"></div>`;
+  tex($('charTex'), `${fmt(P.L,2)}\\,s^{2} + ${fmt(P.R,2)}\\,s + ${fmt(1/P.C,3)} = 0`);
+  let rootsStr;
+  if (typeof A.sr[0]==='string'){ rootsStr = `s = ${A.sr[0]}`; }
+  else { rootsStr = `s_1 = ${fmt(A.sr[0],4)}\\quad s_2 = ${fmt(A.sr[1],4)}`; }
+  tex($('rootsTex'), rootsStr);
+
+  // parámetros característicos
+  const rows=[
+    ['\\omega_0','Frecuencia natural', fmt(A.w0,4)+' rad/s'],
+    ['f_0','Frecuencia natural', fmt(A.f0,4)+' Hz'],
+    ['\\alpha','Coef. amortiguamiento', fmt(A.alpha,4)+' s⁻¹'],
+    ['\\zeta','Razón de amortig.', fmt(A.zeta,4)],
+    ['Q','Factor de calidad', isFinite(A.Q)?fmt(A.Q,3):'∞'],
+  ];
+  if (A.wd!=null && A.regime!=='undamped') rows.splice(2,0,['\\omega_d','Frec. amortiguada', fmt(A.wd,4)+' rad/s']);
+  $('diagGrid').innerHTML = rows.map(r=>
+    `<div class="row"><span class="rk"><span class="sym">$${r[0]}$</span> ${r[1]}</span><span class="rv">${r[2]}</span></div>`
+  ).join('');
+  // render símbolos KaTeX dentro de las filas
+  $('diagGrid').querySelectorAll('.sym').forEach(el=>{
+    const m=el.textContent.replace(/\$/g,''); tex(el,m);
+  });
+
+  // leyenda según pestaña
+  renderLegend();
+}
+function renderLegend(){
+  const L=$('legend');
+  const sets={
+    time:[['var(--cyan)','Carga q(t)  [C]'],['var(--gold-bright)','Corriente i(t)  [A]']],
+    phase:[['var(--violet)','Trayectoria (q, i)'],['var(--gold-bright)','Estado actual']],
+    energy:[['var(--cyan)','Energía en C: q²/2C'],['var(--rose)','Energía en L: ½Li²'],['var(--gold-bright)','Energía total']],
+    reson:[['var(--gold-bright)','|I(ω)| amplitud de corriente'],['var(--cyan)','ω₀ (resonancia)'],['var(--rose)','ω de la fuente']]
+  };
+  L.innerHTML=(sets[P.tab]||sets.time).map(s=>
+    `<div class="lrow"><span class="swatch" style="background:${s[0]}"></span>${s[1]}</div>`).join('');
+}
+
+/* ============================================================
+   4. CANVAS — utilidades de dibujo
+   ============================================================ */
+let DPR=1,W=0,H=0;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  const r=host.getBoundingClientRect(); W=r.width; H=r.height;
+  canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+const PAD={l:64,r:24,t:28,b:44};
+function plotRect(){ return {x:PAD.l,y:PAD.t,w:W-PAD.l-PAD.r,h:H-PAD.t-PAD.b}; }
+function drawAxesFrame(xlabel,ylabel,xmin,xmax,ymin,ymax,fmtX,fmtY){
+  const R=plotRect();
+  ctx.save();
+  // marco
+  ctx.strokeStyle='rgba(120,150,200,.16)'; ctx.lineWidth=1;
+  ctx.strokeRect(R.x,R.y,R.w,R.h);
+  ctx.font='11px "Spline Sans Mono", monospace'; ctx.fillStyle='rgba(159,176,208,.6)';
+  // grid X
+  const nx=6;
+  for(let k=0;k<=nx;k++){
+    const xv=xmin+(xmax-xmin)*k/nx, px=R.x+R.w*k/nx;
+    ctx.strokeStyle='rgba(120,150,200,.07)'; ctx.beginPath(); ctx.moveTo(px,R.y); ctx.lineTo(px,R.y+R.h); ctx.stroke();
+    ctx.textAlign='center'; ctx.fillStyle='rgba(159,176,208,.55)';
+    ctx.fillText((fmtX||fmt)(xv,2), px, R.y+R.h+16);
+  }
+  // grid Y
+  const ny=5;
+  for(let k=0;k<=ny;k++){
+    const yv=ymin+(ymax-ymin)*k/ny, py=R.y+R.h-R.h*k/ny;
+    ctx.strokeStyle='rgba(120,150,200,.07)'; ctx.beginPath(); ctx.moveTo(R.x,py); ctx.lineTo(R.x+R.w,py); ctx.stroke();
+    ctx.textAlign='right'; ctx.fillStyle='rgba(159,176,208,.55)';
+    ctx.fillText((fmtY||fmt)(yv,2), R.x-8, py+4);
+  }
+  // cero
+  if (ymin<0&&ymax>0){ const py=R.y+R.h-R.h*(0-ymin)/(ymax-ymin); ctx.strokeStyle='rgba(159,176,208,.32)'; ctx.beginPath(); ctx.moveTo(R.x,py); ctx.lineTo(R.x+R.w,py); ctx.stroke(); }
+  // etiquetas de eje
+  ctx.fillStyle='rgba(159,176,208,.85)'; ctx.font='12px "Spline Sans Mono", monospace';
+  ctx.textAlign='center'; ctx.fillText(xlabel, R.x+R.w/2, R.y+R.h+38);
+  ctx.save(); ctx.translate(16,R.y+R.h/2); ctx.rotate(-Math.PI/2); ctx.textAlign='center'; ctx.fillText(ylabel,0,0); ctx.restore();
+  ctx.restore();
+  return R;
+}
+function plotSeries(R,xs,ys,xmin,xmax,ymin,ymax,color,width,glow){
+  ctx.save(); ctx.beginPath();
+  for(let n=0;n<xs.length;n++){
+    const px=R.x+R.w*(xs[n]-xmin)/(xmax-xmin);
+    const py=R.y+R.h-R.h*(ys[n]-ymin)/(ymax-ymin);
+    if(n===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  if(glow){ ctx.shadowBlur=10; ctx.shadowColor=color; }
+  ctx.strokeStyle=color; ctx.lineWidth=width||2; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.stroke();
+  ctx.restore();
+}
+
+/* ============================================================
+   5. DIBUJO POR PESTAÑA
+   ============================================================ */
+function draw(){
+  if(!W||!H) return;
+  ctx.clearRect(0,0,W,H);
+  if(P.tab==='time') drawTime();
+  else if(P.tab==='phase') drawPhase();
+  else if(P.tab==='energy') drawEnergy();
+  else if(P.tab==='reson') drawResonance();
+}
+
+function niceRange(min,max){
+  if(min===max){ min-=1; max+=1; }
+  const pad=(max-min)*0.08; min-=pad; max+=pad;
+  if(min>0)min=0; if(max<0)max=0;
+  return [min,max];
+}
+
+function drawTime(){
+  const {t,q,i,n}=SOL;
+  const [ymin,ymax]=niceRange(Math.min(SOL.qmin,SOL.imin),Math.max(SOL.qmax,SOL.imax));
+  const R=drawAxesFrame('tiempo  t  [s]','q(t) , i(t)',0,P.tEnd,ymin,ymax);
+  // recorte
+  ctx.save(); ctx.beginPath(); ctx.rect(R.x,R.y,R.w,R.h); ctx.clip();
+  plotSeries(R,t,q,0,P.tEnd,ymin,ymax,COL.cyan,2.4,true);
+  plotSeries(R,t,i,0,P.tEnd,ymin,ymax,COL.gold,2.4,true);
+  // playhead
+  const tp=playT, px=R.x+R.w*tp/P.tEnd;
+  ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.4; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(px,R.y); ctx.lineTo(px,R.y+R.h); ctx.stroke(); ctx.setLineDash([]);
+  const k=idxAtTime(tp);
+  const dot=(val,col)=>{ const py=R.y+R.h-R.h*(val-ymin)/(ymax-ymin); ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,py,4.5,0,7); ctx.fill(); ctx.strokeStyle='rgba(7,11,22,.9)'; ctx.lineWidth=1.5; ctx.stroke(); };
+  dot(q[k],'#34d6e8'); dot(i[k],'#ffd24a');
+  ctx.restore();
+  updateReadout(k);
+}
+
+function drawPhase(){
+  const {q,i,n}=SOL;
+  const [xmin,xmax]=niceRange(SOL.qmin,SOL.qmax);
+  const [ymin,ymax]=niceRange(SOL.imin,SOL.imax);
+  const R=drawAxesFrame('carga  q  [C]','corriente  i  [A]',xmin,xmax,ymin,ymax);
+  ctx.save(); ctx.beginPath(); ctx.rect(R.x,R.y,R.w,R.h); ctx.clip();
+  // trayectoria con gradiente temporal (violeta -> dorado)
+  ctx.lineWidth=2.2; ctx.lineJoin='round';
+  const kNow=idxAtTime(playT);
+  for(let m=1;m<=n;m++){
+    const f=m/n;
+    const px0=R.x+R.w*(q[m-1]-xmin)/(xmax-xmin), py0=R.y+R.h-R.h*(i[m-1]-ymin)/(ymax-ymin);
+    const px1=R.x+R.w*(q[m]-xmin)/(xmax-xmin), py1=R.y+R.h-R.h*(i[m]-ymin)/(ymax-ymin);
+    const r=Math.round(155+(255-155)*f), g=Math.round(125+(210-125)*f), b=Math.round(255+(74-255)*f);
+    const alpha = m<=kNow?0.95:0.18;
+    ctx.strokeStyle=`rgba(${r},${g},${b},${alpha})`;
+    ctx.beginPath(); ctx.moveTo(px0,py0); ctx.lineTo(px1,py1); ctx.stroke();
+  }
+  // punto inicial
+  const pix=R.x+R.w*(q[0]-xmin)/(xmax-xmin), piy=R.y+R.h-R.h*(i[0]-ymin)/(ymax-ymin);
+  ctx.fillStyle='rgba(155,125,255,.9)'; ctx.beginPath(); ctx.arc(pix,piy,4,0,7); ctx.fill();
+  // estado actual
+  const cx=R.x+R.w*(q[kNow]-xmin)/(xmax-xmin), cy=R.y+R.h-R.h*(i[kNow]-ymin)/(ymax-ymin);
+  ctx.shadowBlur=14; ctx.shadowColor='#ffd24a'; ctx.fillStyle='#ffd24a';
+  ctx.beginPath(); ctx.arc(cx,cy,6,0,7); ctx.fill(); ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(7,11,22,.9)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+  updateReadout(kNow);
+}
+
+function energyArrays(){
+  const {q,i,n}=SOL;
+  const Ec=new Float64Array(n+1), El=new Float64Array(n+1), Et=new Float64Array(n+1);
+  for(let m=0;m<=n;m++){ Ec[m]=q[m]*q[m]/(2*P.C); El[m]=0.5*P.L*i[m]*i[m]; Et[m]=Ec[m]+El[m]; }
+  return {Ec,El,Et};
+}
+function drawEnergy(){
+  const {t,n}=SOL; const {Ec,El,Et}=energyArrays();
+  let emax=0; for(let m=0;m<=n;m++) if(Et[m]>emax)emax=Et[m];
+  emax=emax>0?emax*1.08:1;
+  const R=drawAxesFrame('tiempo  t  [s]','energía  [J]',0,P.tEnd,0,emax);
+  ctx.save(); ctx.beginPath(); ctx.rect(R.x,R.y,R.w,R.h); ctx.clip();
+  plotSeries(R,t,Ec,0,P.tEnd,0,emax,COL.cyan,2,true);
+  plotSeries(R,t,El,0,P.tEnd,0,emax,COL.rose,2,true);
+  plotSeries(R,t,Et,0,P.tEnd,0,emax,COL.gold,2.6,true);
+  const px=R.x+R.w*playT/P.tEnd;
+  ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.4; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(px,R.y); ctx.lineTo(px,R.y+R.h); ctx.stroke(); ctx.setLineDash([]);
+  ctx.restore();
+  const k=idxAtTime(playT);
+  $('plotReadout').innerHTML=`<b>t = ${fmt(t[k],2)} s</b><br>E<sub>C</sub> = <span class="cy">${fmt(Ec[k],3)} J</span><br>E<sub>L</sub> = <span style="color:var(--rose)">${fmt(El[k],3)} J</span><br>E<sub>total</sub> = <span class="am">${fmt(Et[k],3)} J</span>`;
+}
+
+function drawResonance(){
+  // |I(ω)| = E0 / sqrt(R² + (ωL - 1/(ωC))²)  ; pico en ω0, valor E0/R
+  const {R:Rr,L,C}=P; const E0=(P.src==='ac')?P.E0:1;
+  const w0=ANA.w0;
+  const wmax=Math.max(3*w0, P.src==='ac'?1.5*P.W:0);
+  const wmin=Math.max(0.001, w0*0.02);
+  const NN=400;
+  const ws=new Float64Array(NN+1), amp=new Float64Array(NN+1);
+  let amax=0;
+  for(let k=0;k<=NN;k++){
+    const w=wmin+(wmax-wmin)*k/NN;
+    const Z=Math.sqrt(Rr*Rr+Math.pow(w*L-1/(w*C),2));
+    const a=E0/Z; ws[k]=w; amp[k]=a; if(a>amax)amax=a;
+  }
+  amax=amax>0?amax*1.1:1;
+  const Rp=drawAxesFrame('frecuencia angular  ω  [rad/s]','|I(ω)|  [A]',wmin,wmax,0,amax);
+  ctx.save(); ctx.beginPath(); ctx.rect(Rp.x,Rp.y,Rp.w,Rp.h); ctx.clip();
+  // área bajo la curva
+  ctx.beginPath();
+  for(let k=0;k<=NN;k++){ const px=Rp.x+Rp.w*(ws[k]-wmin)/(wmax-wmin), py=Rp.y+Rp.h-Rp.h*amp[k]/amax; if(k===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);}
+  ctx.lineTo(Rp.x+Rp.w,Rp.y+Rp.h); ctx.lineTo(Rp.x,Rp.y+Rp.h); ctx.closePath();
+  ctx.fillStyle='rgba(242,180,23,.08)'; ctx.fill();
+  plotSeries(Rp,ws,amp,wmin,wmax,0,amax,COL.gold,2.6,true);
+  // marca ω0
+  const lineAt=(w,col,label)=>{
+    if(w<wmin||w>wmax)return;
+    const px=Rp.x+Rp.w*(w-wmin)/(wmax-wmin);
+    ctx.strokeStyle=col; ctx.lineWidth=1.6; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(px,Rp.y); ctx.lineTo(px,Rp.y+Rp.h); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=col; ctx.font='600 11px "Spline Sans Mono",monospace'; ctx.textAlign='left';
+    ctx.fillText(label, px+6, Rp.y+16);
+  };
+  lineAt(w0,'rgba(52,214,232,.9)',`ω₀=${fmt(w0,2)}`);
+  if(P.src==='ac') lineAt(P.W,'rgba(255,93,143,.9)',`ω=${fmt(P.W,2)}`);
+  ctx.restore();
+  const half=Rr>1e-9?fmt(E0/Rr,3):'∞';
+  $('plotReadout').innerHTML=`<b>Respuesta en frecuencia</b><br>Pico en ω₀ = <span class="cy">${fmt(w0,3)} rad/s</span><br>|I|<sub>máx</sub> = <span class="am">${half} A</span><br>Ancho de banda Δω = <span class="am">${fmt(ANA.bw,3)} rad/s</span><br>Q = <span class="am">${isFinite(ANA.Q)?fmt(ANA.Q,3):'∞'}</span>`;
+}
+
+function updateReadout(k){
+  const {t,q,i}=SOL;
+  const E=Esource(t[k]);
+  const vR=P.R*i[k], vC=q[k]/P.C, vL=E-vR-vC;
+  $('plotReadout').innerHTML=
+    `<b>t = ${fmt(t[k],2)} s</b><br>`+
+    `q = <span class="cy">${fmt(q[k],3)} C</span><br>`+
+    `i = <span class="am">${fmt(i[k],3)} A</span><br>`+
+    `V<sub>R</sub>=${fmt(vR,2)}  V<sub>L</sub>=${fmt(vL,2)}  V<sub>C</sub>=${fmt(vC,2)}`;
+}
+
+/* ============================================================
+   6. ESQUEMA DEL CIRCUITO (SVG) + animación de corriente
+   ============================================================ */
+const NS='http://www.w3.org/2000/svg';
+let flowDots=[], loopPath=null, loopLen=0, flowOffset=0;
+function buildCircuit(){
+  const svg=$('circuit'); svg.innerHTML='';
+  const mk=(tag,attrs)=>{ const e=document.createElementNS(NS,tag); for(const k in attrs)e.setAttribute(k,attrs[k]); return e; };
+  // lazo (rectángulo redondeado) — sirve de guía para los puntos de corriente
+  const d='M 55 40 H 245 Q 260 40 260 55 V 155 Q 260 170 245 170 H 55 Q 40 170 40 155 V 55 Q 40 40 55 40 Z';
+  loopPath=mk('path',{d,fill:'none',stroke:'#1f2e4a','stroke-width':3,'stroke-linejoin':'round'});
+  svg.appendChild(loopPath);
+  loopLen=loopPath.getTotalLength();
+
+  // puntos de corriente (flujo)
+  flowDots=[];
+  const ND=14;
+  for(let k=0;k<ND;k++){ const c=mk('circle',{r:2.6,fill:'#ffd24a',opacity:0.9}); svg.appendChild(c); flowDots.push(c); }
+
+  // ---- símbolos de componentes (encima del lazo) ----
+  const wireCol='#0a1020';
+  // Fuente (izquierda) — círculo AC / batería
+  svg.appendChild(mk('line',{x1:40,y1:80,x2:40,y2:130,stroke:wireCol,'stroke-width':8}));
+  const srcG=mk('circle',{cx:40,cy:105,r:17,fill:'#0e1628',stroke:'#9b7dff','stroke-width':2.4});
+  svg.appendChild(srcG);
+  const srcSym=mk('text',{x:40,y:105,'text-anchor':'middle','dominant-baseline':'central',fill:'#9b7dff','font-size':16,'font-family':'monospace',id:'srcSym'});
+  svg.appendChild(srcSym);
+  svg.appendChild(mk('text',{x:40,y:148,'text-anchor':'middle',fill:'#9fb0d0','font-size':9,'font-family':'monospace',id:'lblSrc'}));
+
+  // Resistencia (arriba, zigzag)
+  svg.appendChild(mk('line',{x1:88,y1:40,x2:108,y2:40,stroke:wireCol,'stroke-width':8}));
+  svg.appendChild(mk('polyline',{points:'108,40 113,32 121,48 129,32 137,48 145,32 150,40',fill:'none',stroke:'#ff9a3c','stroke-width':2.6,'stroke-linejoin':'round'}));
+  svg.appendChild(mk('line',{x1:150,y1:40,x2:170,y2:40,stroke:wireCol,'stroke-width':8}));
+  svg.appendChild(mk('text',{x:129,y:22,'text-anchor':'middle',fill:'#ff9a3c','font-size':10,'font-family':'monospace','font-weight':600,id:'lblR'}));
+
+  // Inductor (arriba derecha, bobinas)
+  svg.appendChild(mk('path',{d:'M 185 40 q 7 -12 14 0 q 7 -12 14 0 q 7 -12 14 0',fill:'none',stroke:'#34d6e8','stroke-width':2.6,'stroke-linecap':'round'}));
+  svg.appendChild(mk('text',{x:206,y:22,'text-anchor':'middle',fill:'#34d6e8','font-size':10,'font-family':'monospace','font-weight':600,id:'lblL'}));
+
+  // Capacitor (abajo, placas)
+  svg.appendChild(mk('line',{x1:120,y1:170,x2:140,y2:170,stroke:wireCol,'stroke-width':8}));
+  svg.appendChild(mk('line',{x1:140,y1:158,x2:140,y2:182,stroke:'#f2b417','stroke-width':2.8}));
+  svg.appendChild(mk('line',{x1:150,y1:158,x2:150,y2:182,stroke:'#f2b417','stroke-width':2.8}));
+  svg.appendChild(mk('line',{x1:150,y1:170,x2:170,y2:170,stroke:wireCol,'stroke-width':8}));
+  svg.appendChild(mk('text',{x:145,y:198,'text-anchor':'middle',fill:'#f2b417','font-size':10,'font-family':'monospace','font-weight':600,id:'lblC'}));
+
+  updateCircuitLabels();
+  positionFlow();
+}
+function updateCircuitLabels(){
+  $('lblR') && ($('lblR').textContent=`R=${fmt(P.R,2)}Ω`);
+  $('lblL') && ($('lblL').textContent=`L=${fmt(P.L,2)}H`);
+  $('lblC') && ($('lblC').textContent=`C=${fmt(P.C,2)}F`);
+  const sym=$('srcSym'), lbl=$('lblSrc');
+  if(sym){ sym.textContent = P.src==='ac'?'∿':P.src==='step'?'⎓':'·'; }
+  if(lbl){ lbl.textContent = P.src==='free'?'sin fuente':P.src==='step'?`${fmt(P.E0,1)}V`:`${fmt(P.E0,1)}V`; }
+}
+function positionFlow(){
+  if(!loopPath || !flowDots.length) return;
+  const iabs = (SOL.iabs && isFinite(SOL.iabs)) ? SOL.iabs : 1;
+  const k = SOL.n ? idxAtTime(playT) : 0;
+  const iVal = (SOL.i && isFinite(SOL.i[k])) ? SOL.i[k] : 0;
+  const dir = iVal>=0?1:-1;
+  const spacing = loopLen/flowDots.length;
+  const mag = Math.min(1, Math.abs(iVal)/iabs);
+  for(let d=0;d<flowDots.length;d++){
+    let len=(flowOffset*dir + d*spacing);
+    len=((len%loopLen)+loopLen)%loopLen;
+    const pt=loopPath.getPointAtLength(len);
+    flowDots[d].setAttribute('cx',pt.x);
+    flowDots[d].setAttribute('cy',pt.y);
+    flowDots[d].setAttribute('opacity', (0.15+0.8*mag).toFixed(2));
+    flowDots[d].setAttribute('r', (2+1.4*mag).toFixed(2));
+  }
+}
+
+/* ============================================================
+   7. PLAYBACK
+   ============================================================ */
+function setPlayhead(tt){ playT=Math.max(0,Math.min(P.tEnd,tt)); $('scrub').value=Math.round(playT/P.tEnd*1000); $('tlabel').textContent=`t = ${fmt(playT,2)} s`; }
+function loop(ts){
+  if(!playing) return;
+  if(!lastFrame) lastFrame=ts;
+  const real=(ts-lastFrame)/1000; lastFrame=ts;
+  // recorrido completo del tiempo simulado en (8 / speed) segundos de reloj
+  const dur=8/P.speed;
+  playT += real*(P.tEnd/dur);
+  // corriente para el flujo
+  const k=idxAtTime(playT);
+  const iVal=SOL.i[k]||0;
+  flowOffset += real*(Math.abs(iVal)/SOL.iabs)*loopLen*0.7;
+  if(playT>=P.tEnd){ playT=P.tEnd; playing=false; setPlayIcon(); }
+  setPlayhead(playT); positionFlow(); draw();
+  if(playing) requestAnimationFrame(loop);
+}
+function setPlayIcon(){
+  $('playIcon').innerHTML = playing
+    ? '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+}
+function togglePlay(){
+  if(playT>=P.tEnd) playT=0;
+  playing=!playing; lastFrame=0; setPlayIcon();
+  if(playing) requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   8. PRESETS
+   ============================================================ */
+const PRESETS=[
+  {name:'Subamortiguado', tag:'ζ<1', R:0.4,L:1,C:1,src:'free',E0:1,W:1,q0:1,i0:0},
+  {name:'Sobreamortiguado', tag:'ζ>1', R:4,L:1,C:1,src:'free',E0:1,W:1,q0:1,i0:0},
+  {name:'Amortig. crítico', tag:'ζ=1', R:2,L:1,C:1,src:'free',E0:1,W:1,q0:1,i0:0},
+  {name:'Sin amortiguar', tag:'R=0', R:0,L:1,C:1,src:'free',E0:1,W:1,q0:1,i0:0},
+  {name:'Carga por escalón', tag:'DC', R:1,L:1,C:1,src:'step',E0:1,W:1,q0:0,i0:0},
+  {name:'Resonancia', tag:'ω=ω₀', R:0.3,L:1,C:1,src:'ac',E0:1,W:1,q0:0,i0:0},
+  {name:'Forzado fuera de resonancia', tag:'ω≠ω₀', R:0.6,L:1,C:1,src:'ac',E0:1,W:2.2,q0:0,i0:0},
+];
+function buildPresets(){
+  const box=$('presets');
+  box.innerHTML=PRESETS.map((p,k)=>`<button class="preset" data-k="${k}"><span class="pname">${p.name}</span><span class="ptag">${p.tag}</span></button>`).join('');
+  box.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{
+    const p=PRESETS[+b.dataset.k];
+    box.querySelectorAll('.preset').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    Object.assign(P,{R:p.R,L:p.L,C:p.C,src:p.src,E0:p.E0,W:p.W,q0:p.q0,i0:p.i0,tAuto:true});
+    syncInputs(); setSource(p.src); recompute(true);
+  }));
+}
+
+/* ============================================================
+   9. SINCRONIZACIÓN DE CONTROLES
+   ============================================================ */
+function syncInputs(){
+  $('Rnum').value=P.R; $('Rrange').value=clampRange(P.R,$('Rrange'));
+  $('Lnum').value=P.L; $('Lrange').value=clampRange(P.L,$('Lrange'));
+  $('Cnum').value=P.C; $('Crange').value=clampRange(P.C,$('Crange'));
+  $('E0num').value=P.E0; $('Wnum').value=P.W;
+  $('q0num').value=P.q0; $('i0num').value=P.i0;
+}
+function clampRange(v,el){ return Math.max(+el.min,Math.min(+el.max,v)); }
+function setSource(src){
+  P.src=src;
+  $('srcSeg').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.src===src));
+  $('rowE0').style.display = src==='free'?'none':'flex';
+  $('rowW').style.display  = src==='ac'?'flex':'none';
+}
+
+/* ============================================================
+   10. RECOMPUTE
+   ============================================================ */
+function recompute(resetPlayhead){
+  analyze();
+  integrate();
+  renderEquations();
+  renderDiagnostics();
+  updateCircuitLabels();
+  if(resetPlayhead){ playing=false; setPlayIcon(); setPlayhead(0); }
+  else setPlayhead(Math.min(playT,P.tEnd));
+  positionFlow();
+  draw();
+}
+
+/* ============================================================
+   11. EVENTOS
+   ============================================================ */
+function linkParam(numId,rangeId,key){
+  const num=$(numId), rng=$(rangeId);
+  num.addEventListener('input',()=>{ const v=parseFloat(num.value); if(isFinite(v)){ P[key]=v; rng.value=clampRange(v,rng); P.tAuto=true; recompute(false); } });
+  rng.addEventListener('input',()=>{ const v=parseFloat(rng.value); P[key]=v; num.value=v; P.tAuto=true; recompute(false); });
+}
+function linkField(id,key){
+  $(id).addEventListener('input',()=>{ const v=parseFloat($(id).value); if(isFinite(v)){ P[key]=v; P.tAuto=(key!=='tEnd'); recompute(key==='q0'||key==='i0'?true:false); } });
+}
+function bind(){
+  linkParam('Rnum','Rrange','R');
+  linkParam('Lnum','Lrange','L');
+  linkParam('Cnum','Crange','C');
+  linkField('E0num','E0'); linkField('Wnum','W');
+  $('q0num').addEventListener('input',()=>{const v=parseFloat($('q0num').value); if(isFinite(v)){P.q0=v; recompute(true);}});
+  $('i0num').addEventListener('input',()=>{const v=parseFloat($('i0num').value); if(isFinite(v)){P.i0=v; recompute(true);}});
+  $('tEndNum').addEventListener('input',()=>{const v=parseFloat($('tEndNum').value); if(isFinite(v)&&v>0){P.tEnd=v;P.tAuto=false; recompute(false);}});
+  $('btnAuto').addEventListener('click',()=>{P.tAuto=true; recompute(false);});
+
+  $('srcSeg').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ setSource(b.dataset.src); P.tAuto=true; recompute(true); }));
+
+  // tabs
+  $('tabs').querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    $('tabs').querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active'); P.tab=t.dataset.tab; renderLegend(); draw();
+  }));
+
+  // transporte
+  $('playBtn').addEventListener('click',togglePlay);
+  $('scrub').addEventListener('input',()=>{ playing=false; setPlayIcon(); setPlayhead(+$('scrub').value/1000*P.tEnd); positionFlow(); draw(); });
+  $('speedSel').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    $('speedSel').querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); P.speed=parseFloat(b.dataset.s);
+  }));
+
+  // hover/click sobre el plot (tiempo y energía => mover playhead)
+  host.addEventListener('mousemove',e=>{
+    if(P.tab!=='time'&&P.tab!=='energy') return;
+    const r=host.getBoundingClientRect(); const R=plotRect();
+    const px=e.clientX-r.left;
+    if(px<R.x||px>R.x+R.w) return;
+    const tt=(px-R.x)/R.w*P.tEnd; if(!playing){ setPlayhead(tt); positionFlow(); draw(); }
+  });
+  host.addEventListener('click',e=>{
+    const r=host.getBoundingClientRect(); const R=plotRect();
+    const px=e.clientX-r.left;
+    if(px<R.x||px>R.x+R.w) return;
+    if(P.tab==='time'||P.tab==='energy'){ playing=false; setPlayIcon(); setPlayhead((px-R.x)/R.w*P.tEnd); positionFlow(); draw(); }
+  });
+
+  window.addEventListener('resize',resize);
+}
+
+/* ============================================================
+   12. UTIL
+   ============================================================ */
+function fmt(n,d=2){
+  if(!isFinite(n)) return n>0?'∞':'-∞';
+  if(Math.abs(n)<1e-12) return '0';
+  if(Math.abs(n)>=1e4||Math.abs(n)<1e-3){ return n.toExponential(2); }
+  const r=+n.toFixed(d); return Number.isInteger(r)?r.toString():r.toString();
+}
+
+/* ============================================================
+   13. INIT
+   ============================================================ */
+function init(){
+  buildPresets();
+  $('presets').querySelector('.preset[data-k="0"]').classList.add('active');
+  setSource('free');
+  syncInputs();
+  bind();
+  buildCircuit();
+  recompute(true);
+  resize();
+}
+function whenReady(){ if(window.katex){ init(); } else setTimeout(whenReady,60); }
+whenReady();
+})();
+</script>
+</body>
+</html>
